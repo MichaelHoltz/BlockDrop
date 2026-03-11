@@ -38,12 +38,7 @@ namespace BlockDrop
         /// </summary>
         private int OffsetY;
 
-        /// <summary>
-        /// Direction of block movement.
-        /// true  = blocks spawn at the top and fall down.
-        /// false = blocks spawn at the bottom and rise up.
-        /// </summary>
-        private bool MoveDown = true;
+
 
         /// <summary>
         /// All blocks currently alive on the grid
@@ -98,8 +93,8 @@ namespace BlockDrop
         /// </summary>
         private void Form1_Load(object sender, EventArgs e)
         {
-            _blockDropSettings = new BlockDropSettings();
-            _propertyForm = new PropertyForm(_blockDropSettings);
+            _blockDropSettings = BlockDropSettings.Load<BlockDropSettings>($@"C:\Projects_Sandbox\BlockDrop\settings.json");
+            _propertyForm = new PropertyForm(_blockDropSettings, this);
             _propertyForm.TopMost = true;
 
             // Place PropertyForm on a different monitor if available
@@ -172,7 +167,7 @@ namespace BlockDrop
         /// </summary>
         private void UpdateBlocks(float deltaMs)
         {
-            float direction = MoveDown ? 1.0f : -1.0f;
+            float direction = _blockDropSettings.MoveDown ? 1.0f : -1.0f;
 
             for (int i = activeBlocks.Count - 1; i >= 0; i--)
             {
@@ -181,7 +176,7 @@ namespace BlockDrop
                 block.RowPosition += moveSpeed * colMultiplier * deltaMs * direction;
 
                 // How many full rows has this block travelled since spawn?
-                float distance = MoveDown
+                float distance = _blockDropSettings.MoveDown
                     ? block.RowPosition
                     : (NumRows - 1) - block.RowPosition;
 
@@ -190,7 +185,7 @@ namespace BlockDrop
                     block.MoveBlock();
 
                 // Remove if expired or fully off-screen
-                bool offScreen = MoveDown
+                bool offScreen = _blockDropSettings.MoveDown
                     ? block.RowPosition >= NumRows
                     : block.RowPosition < -1f;
 
@@ -207,8 +202,8 @@ namespace BlockDrop
         /// </summary>
         private void SpawnNewRow()
         {
-            int spawnRow = MoveDown ? 0 : NumRows - 1;
-            int adjacentRow = MoveDown ? 1 : NumRows - 2;
+            int spawnRow = _blockDropSettings.MoveDown ? 0 : NumRows - 1;
+            int adjacentRow = _blockDropSettings.MoveDown ? 1 : NumRows - 2;
 
             // Build set of columns that are blocked by nearby blocks
             HashSet<int> blockedColumns = new HashSet<int>();
@@ -240,10 +235,11 @@ namespace BlockDrop
                 eligible[j] = tmp;
             }
 
-            float startRow = MoveDown ? 0f : NumRows - 1f;
+            float startRow = _blockDropSettings.MoveDown ? 0f : NumRows - 1f;
             for (int i = 0; i < count; i++)
             {
-                Block b = new Block(BackColor, NumRows, eligible[i]);
+                Block b = new Block(BackColor, NumRows, eligible[i],
+                    _blockDropSettings.UseAllColors, _blockDropSettings.BaseColor);
                 b.RowPosition = startRow;
                 activeBlocks.Add(b);
             }

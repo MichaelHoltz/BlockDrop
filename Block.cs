@@ -49,11 +49,15 @@ namespace BlockDrop
         /// Constructor for the block class. 
         /// </summary>
         /// <param name="backColor">Color to avoid</param>
-        /// <param name="maxRows">Max Rows possible </param>
-        /// <param name="assignedColumn">Max Columns possible </param>
-        public Block(Color backColor, int maxRows, int assignedColumn)
+        /// <param name="maxRows">Max Rows possible</param>
+        /// <param name="assignedColumn">Column position</param>
+        /// <param name="useAllColors">true = fully random colors, false = hue-locked to baseColor</param>
+        /// <param name="baseColor">Base color whose hue is used when useAllColors is false</param>
+        public Block(Color backColor, int maxRows, int assignedColumn, bool useAllColors = true, Color? baseColor = null)
         {
-            BlockColor = getRandomColor(backColor);
+            BlockColor = useAllColors
+                ? getRandomColor(backColor)
+                : getRandomHueColor(baseColor ?? Color.Green, backColor);
             MaxLifeMoves = getMaxLifeMoves(maxRows);
             CurrentLifeMoves = 0;
             AssignedColumn = assignedColumn;
@@ -79,6 +83,51 @@ namespace BlockDrop
                 randomColor = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
             } while (getColorDifference(randomColor, backColor) < 100); // Ensure a good contrast
             return randomColor;
+        }
+
+        /// <summary>
+        /// Generates a random color that shares the same hue as the base color
+        /// but varies in saturation and brightness. Ensures contrast with the background.
+        /// </summary>
+        /// <param name="baseColor">Color whose hue to preserve</param>
+        /// <param name="backColor">Background color to avoid</param>
+        /// <returns>A random color with the same hue</returns>
+        private Color getRandomHueColor(Color baseColor, Color backColor)
+        {
+            float hue = baseColor.GetHue();
+            Color randomColor;
+            do
+            {
+                // Saturation 0.4–1.0, Brightness 0.3–1.0 to keep vivid, visible results
+                float saturation = 0.4f + (float)(rand.NextDouble() * 0.6);
+                float brightness = 0.3f + (float)(rand.NextDouble() * 0.7);
+                randomColor = ColorFromHSB(hue, saturation, brightness);
+            } while (getColorDifference(randomColor, backColor) < 100);
+            return randomColor;
+        }
+
+        /// <summary>
+        /// Converts HSB (Hue 0–360, Saturation 0–1, Brightness 0–1) to a System.Drawing.Color.
+        /// </summary>
+        private static Color ColorFromHSB(float hue, float saturation, float brightness)
+        {
+            int hi = (int)(Math.Floor(hue / 60.0)) % 6;
+            float f = (hue / 60.0f) - (float)Math.Floor(hue / 60.0);
+
+            int v = (int)(brightness * 255);
+            int p = (int)(brightness * (1 - saturation) * 255);
+            int q = (int)(brightness * (1 - f * saturation) * 255);
+            int t = (int)(brightness * (1 - (1 - f) * saturation) * 255);
+
+            switch (hi)
+            {
+                case 0: return Color.FromArgb(v, t, p);
+                case 1: return Color.FromArgb(q, v, p);
+                case 2: return Color.FromArgb(p, v, t);
+                case 3: return Color.FromArgb(p, q, v);
+                case 4: return Color.FromArgb(t, p, v);
+                default: return Color.FromArgb(v, p, q);
+            }
         }
 
         /// <summary>
