@@ -1,12 +1,149 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BlockDrop.Classes.Gears
 {
-    internal class Gear
+    public class Gear
     {
+        // Basic gear properties
+        public bool IsOutsideGear { get; set; } = true;
+        public double Radius { get; set; }
+        public int TeethCount { get; set; }
+        public double ToothPitch { get; set; } // Shared pitch for gear meshing
+        
+        // Shape definition using vertices for custom/spline shapes
+        // Used primarily for inside gears with custom curves
+        public List<PointF> ShapeVertices { get; set; }
+        
+        // Position and rotation state
+        public PointF Position { get; set; }
+        public double RotationAngle { get; set; } // Current rotation in radians
+        
+        // Trace points for drawing spirograph patterns
+        public List<TracePoint> TracePoints { get; set; }
+        
+        // Shape type for rendering
+        public GearShapeType ShapeType { get; set; }
+        
+        public Gear()
+        {
+            ShapeVertices = new List<PointF>();
+            TracePoints = new List<TracePoint>();
+            Position = new PointF(0, 0);
+            RotationAngle = 0;
+            ShapeType = GearShapeType.Circle;
+        }
+        
+        // Add a vertex to define custom shape (for inside gears)
+        public void AddVertex(PointF vertex)
+        {
+            ShapeVertices.Add(vertex);
+        }
+        
+        // Remove a vertex at specified index
+        public void RemoveVertex(int index)
+        {
+            if (index >= 0 && index < ShapeVertices.Count)
+            {
+                ShapeVertices.RemoveAt(index);
+            }
+        }
+        
+        // Add a trace point at specified radius, angle, and color
+        public void AddTracePoint(double radius, double angle, Color color)
+        {
+            TracePoints.Add(new TracePoint 
+            { 
+                Radius = radius, 
+                Angle = angle, 
+                TraceColor = color 
+            });
+        }
+        
+        // Remove a trace point
+        public void RemoveTracePoint(int index)
+        {
+            if (index >= 0 && index < TracePoints.Count)
+            {
+                TracePoints.RemoveAt(index);
+            }
+        }
+        
+        // Calculate point on gear perimeter at given angle
+        public PointF GetPointAtAngle(double angle)
+        {
+            if (ShapeType == GearShapeType.Circle)
+            {
+                double x = Position.X + Radius * Math.Cos(angle);
+                double y = Position.Y + Radius * Math.Sin(angle);
+                return new PointF((float)x, (float)y);
+            }
+            else if (ShapeType == GearShapeType.Custom && ShapeVertices.Count > 0)
+            {
+                // Interpolate between vertices for custom shapes
+                // This is a simplified approach - you may want spline interpolation
+                return InterpolateCustomShape(angle);
+            }
+            
+            return Position;
+        }
+        
+        private PointF InterpolateCustomShape(double angle)
+        {
+            if (ShapeVertices.Count == 0)
+                return Position;
+            
+            // Normalize angle to [0, 2π]
+            double normalizedAngle = angle % (2 * Math.PI);
+            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+            
+            // Find the appropriate segment
+            double segmentAngle = (2 * Math.PI) / ShapeVertices.Count;
+            int index = (int)(normalizedAngle / segmentAngle);
+            int nextIndex = (index + 1) % ShapeVertices.Count;
+            
+            // Linear interpolation between vertices
+            double t = (normalizedAngle - index * segmentAngle) / segmentAngle;
+            float x = ShapeVertices[index].X + (float)t * (ShapeVertices[nextIndex].X - ShapeVertices[index].X);
+            float y = ShapeVertices[index].Y + (float)t * (ShapeVertices[nextIndex].Y - ShapeVertices[index].Y);
+            
+            return new PointF(Position.X + x, Position.Y + y);
+        }
+    }
+    
+    public class TracePoint
+    {
+        public double Radius { get; set; } // Offset from gear center
+        public double Angle { get; set; } // Angle relative to gear center
+        public Color TraceColor { get; set; }
+        public List<PointF> TracePath { get; set; } // Accumulated path points
+        public bool IsEnabled { get; set; }
+        
+        public TracePoint()
+        {
+            TracePath = new List<PointF>();
+            IsEnabled = true;
+            TraceColor = Color.Black;
+        }
+        
+        // Calculate absolute position based on gear state
+        public PointF GetAbsolutePosition(Gear gear)
+        {
+            double totalAngle = gear.RotationAngle + Angle;
+            double x = gear.Position.X + Radius * Math.Cos(totalAngle);
+            double y = gear.Position.Y + Radius * Math.Sin(totalAngle);
+            return new PointF((float)x, (float)y);
+        }
+    }
+    
+    public enum GearShapeType
+    {
+        Circle,
+        Oval,
+        Custom // Defined by ShapeVertices
     }
 }
