@@ -14,6 +14,7 @@ namespace BlockDrop.Classes.Gears
         public double Radius { get; set; }
         public int TeethCount { get; set; }
         public double ToothPitch { get; set; } // Shared pitch for gear meshing
+        public Color GearColor { get; set; } // Color for rendering the gear
         
         // Shape definition using vertices for custom/spline shapes
         // Used primarily for inside gears with custom curves
@@ -36,6 +37,7 @@ namespace BlockDrop.Classes.Gears
             Position = new PointF(0, 0);
             RotationAngle = 0;
             ShapeType = GearShapeType.Circle;
+            GearColor = Color.Gray;
         }
         
         // Add a vertex to define custom shape (for inside gears)
