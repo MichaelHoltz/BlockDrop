@@ -110,7 +110,7 @@ namespace BlockDrop.Forms
             double orbitAngle = outsideGear.RotationAngle * (insideGear.Radius / outsideGear.Radius);
             
             // Distance between centers accounting for tooth heights
-            double centerDistance = insideGear.Radius - insideToothHeight - (outsideGear.Radius + outsideToothHeight);
+            double centerDistance = insideGear.Radius - insideToothHeight/2 - (outsideGear.Radius + outsideToothHeight/2);
             
             // Calculate new position along inside gear perimeter
             float newX = insideGear.Position.X + (float)(centerDistance * Math.Cos(orbitAngle));
