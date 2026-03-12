@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace BlockDrop
+namespace BlockDrop.Classes.BlockDrop
 {
     /// <summary>
     /// 100 procedurally-defined alien symbol glyphs stored as normalised 0–1

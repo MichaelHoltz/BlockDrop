@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             this.btnFormBlockDrop = new System.Windows.Forms.Button();
+            this.btnGearConfig = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnFormBlockDrop
             // 
-            this.btnFormBlockDrop.Location = new System.Drawing.Point(34, 49);
+            this.btnFormBlockDrop.Location = new System.Drawing.Point(57, 48);
             this.btnFormBlockDrop.Name = "btnFormBlockDrop";
             this.btnFormBlockDrop.Size = new System.Drawing.Size(141, 40);
             this.btnFormBlockDrop.TabIndex = 0;
@@ -41,11 +42,22 @@
             this.btnFormBlockDrop.UseVisualStyleBackColor = true;
             this.btnFormBlockDrop.Click += new System.EventHandler(this.btnFormBlockDrop_Click);
             // 
+            // btnGearConfig
+            // 
+            this.btnGearConfig.Location = new System.Drawing.Point(57, 116);
+            this.btnGearConfig.Name = "btnGearConfig";
+            this.btnGearConfig.Size = new System.Drawing.Size(141, 40);
+            this.btnGearConfig.TabIndex = 1;
+            this.btnGearConfig.Text = "Gear Config";
+            this.btnGearConfig.UseVisualStyleBackColor = true;
+            this.btnGearConfig.Click += new System.EventHandler(this.btnGearConfig_Click);
+            // 
             // FormSelection
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(213, 304);
+            this.ClientSize = new System.Drawing.Size(249, 304);
+            this.Controls.Add(this.btnGearConfig);
             this.Controls.Add(this.btnFormBlockDrop);
             this.Name = "FormSelection";
             this.Text = "Selection Form";
@@ -56,5 +68,6 @@
         #endregion
 
         private System.Windows.Forms.Button btnFormBlockDrop;
+        private System.Windows.Forms.Button btnGearConfig;
     }
 }

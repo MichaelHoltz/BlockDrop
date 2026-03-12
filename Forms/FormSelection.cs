@@ -25,5 +25,13 @@ namespace BlockDrop.Forms
             this.Show();
 
         }
+
+        private void btnGearConfig_Click(object sender, EventArgs e)
+        {
+            FormGearConfig formGearConfig = new FormGearConfig();
+            this.Hide();
+            formGearConfig.ShowDialog(this);
+            this.Show();
+        }
     }
 }

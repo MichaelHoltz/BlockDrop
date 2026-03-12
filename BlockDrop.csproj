@@ -46,8 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AlienGlyphs.cs" />
-    <Compile Include="Block.cs" />
+    <Compile Include="Classes\BlockDrop\AlienGlyphs.cs" />
+    <Compile Include="Classes\BlockDrop\Block.cs" />
+    <Compile Include="Classes\Gears\Gear.cs" />
+    <Compile Include="Forms\FormGearConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormGearConfig.Designer.cs">
+      <DependentUpon>FormGearConfig.cs</DependentUpon>
+    </Compile>
     <Compile Include="Settings\BlockDropSettings.cs" />
     <Compile Include="Forms\FormBlockDrop.cs">
       <SubType>Form</SubType>
@@ -61,7 +68,6 @@
     <Compile Include="Forms\FormSelection.Designer.cs">
       <DependentUpon>FormSelection.cs</DependentUpon>
     </Compile>
-    <Compile Include="Interfaces\iFormWithProperties.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Forms\PropertyForm.cs">
@@ -70,9 +76,13 @@
     <Compile Include="Forms\PropertyForm.Designer.cs">
       <DependentUpon>PropertyForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Settings\GearSession.cs" />
     <Compile Include="Settings\SettingsBase.cs" />
     <EmbeddedResource Include="Forms\FormBlockDrop.resx">
       <DependentUpon>FormBlockDrop.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormGearConfig.resx">
+      <DependentUpon>FormGearConfig.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\FormSelection.resx">
       <DependentUpon>FormSelection.cs</DependentUpon>
@@ -106,6 +116,9 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.4</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using BlockDrop.Settings;
+using BlockDrop.Classes.BlockDrop;
 
 namespace BlockDrop.Forms
 {
