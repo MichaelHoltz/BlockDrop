@@ -41,6 +41,16 @@ namespace BlockDrop
         public float RowPosition { get; set; }
 
         /// <summary>
+        /// Index into AlienGlyphs (0 – 49) identifying this block's symbol
+        /// </summary>
+        public int GlyphIndex { get; private set; }
+
+        /// <summary>
+        /// Current opacity (0.0 = invisible, 1.0 = fully opaque). Updated each frame by Form1.
+        /// </summary>
+        public float Opacity { get; set; }
+
+        /// <summary>
         /// Whether this block has reached or exceeded its maximum life moves
         /// </summary>
         public bool IsExpired => CurrentLifeMoves >= MaxLifeMoves;
@@ -61,6 +71,8 @@ namespace BlockDrop
             MaxLifeMoves = getMaxLifeMoves(maxRows);
             CurrentLifeMoves = 0;
             AssignedColumn = assignedColumn;
+            GlyphIndex = rand.Next(AlienGlyphs.Count);
+            Opacity = 0f;
         }
 
         /// <summary>
@@ -133,9 +145,6 @@ namespace BlockDrop
         /// <summary>
         /// Get the color difference between two colors. This is a simple sum of the absolute differences of the RGB components. A higher value means more different colors.
         /// </summary>
-        /// <param name="c1"></param>
-        /// <param name="c2"></param>
-        /// <returns></returns>
         private int getColorDifference(Color c1, Color c2)
         {
             return Math.Abs(c1.R - c2.R) + Math.Abs(c1.G - c2.G) + Math.Abs(c1.B - c2.B);
@@ -144,8 +153,6 @@ namespace BlockDrop
         /// <summary>
         /// Function to get a random number that is at least 1/4 of the max rows and up to maxRows.
         /// </summary>
-        /// <param name="maxRows"></param>
-        /// <returns></returns>
         private int getMaxLifeMoves(int maxRows)
         {
             return rand.Next(maxRows / 4, maxRows + 1);

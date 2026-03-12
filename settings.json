@@ -1,6 +1,8 @@
 {
   "RowTravelTimeMs": 500.0,
   "MoveDown": true,
+  "FadeInRows": 1.0,
+  "FadeOutRows": 1.0,
   "UseAllColors": false,
   "BaseColor": "128, 255, 128",
   "UILanguage": "en-US"

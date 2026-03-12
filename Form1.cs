@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
 
 namespace BlockDrop
 {
@@ -162,12 +163,14 @@ namespace BlockDrop
 
         /// <summary>
         /// Advances every block's smooth position, increments CurrentLifeMoves
-        /// each time a full row boundary is crossed, and removes expired or
-        /// off-screen blocks.
+        /// each time a full row boundary is crossed, computes fade opacity,
+        /// and removes expired or off-screen blocks.
         /// </summary>
         private void UpdateBlocks(float deltaMs)
         {
             float direction = _blockDropSettings.MoveDown ? 1.0f : -1.0f;
+            float fadeInRows = _blockDropSettings.FadeInRows;
+            float fadeOutRows = _blockDropSettings.FadeOutRows;
 
             for (int i = activeBlocks.Count - 1; i >= 0; i--)
             {
@@ -183,6 +186,12 @@ namespace BlockDrop
                 int rowsCrossed = (int)distance;
                 while (block.CurrentLifeMoves < rowsCrossed)
                     block.MoveBlock();
+
+                // Compute fade-in / fade-out opacity
+                float fadeIn = fadeInRows > 0f ? Math.Min(1f, distance / fadeInRows) : 1f;
+                float remaining = block.MaxLifeMoves - distance;
+                float fadeOut = fadeOutRows > 0f ? Math.Min(1f, remaining / fadeOutRows) : 1f;
+                block.Opacity = Math.Max(0f, Math.Min(fadeIn, fadeOut));
 
                 // Remove if expired or fully off-screen
                 bool offScreen = _blockDropSettings.MoveDown
@@ -246,20 +255,27 @@ namespace BlockDrop
         }
 
         /// <summary>
-        /// Draws every active block at its smooth floating-point row position.
+        /// Draws every active block's alien glyph at its smooth floating-point row position
+        /// with per-block opacity for fade-in / fade-out.
         /// </summary>
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            float penWidth = Math.Max(1f, CellSize * 0.08f);
 
             foreach (var block in activeBlocks)
             {
-                using (SolidBrush brush = new SolidBrush(block.BlockColor))
-                {
-                    float x = OffsetX + block.AssignedColumn * CellSize;
-                    float y = OffsetY + block.RowPosition * CellSize;
-                    g.FillRectangle(brush, x, y, CellSize - 1, CellSize - 1);
-                }
+                if (block.Opacity <= 0f) continue;
+
+                int alpha = (int)(block.Opacity * 255);
+                Color fadedColor = Color.FromArgb(alpha, block.BlockColor);
+
+                float x = OffsetX + block.AssignedColumn * CellSize;
+                float y = OffsetY + block.RowPosition * CellSize;
+                var cell = new RectangleF(x, y, CellSize - 1, CellSize - 1);
+
+                AlienGlyphs.Draw(block.GlyphIndex, g, cell, fadedColor, penWidth);
             }
         }
 
