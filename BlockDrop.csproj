@@ -48,13 +48,20 @@
   <ItemGroup>
     <Compile Include="AlienGlyphs.cs" />
     <Compile Include="Block.cs" />
-    <Compile Include="BlockDropSettings.cs" />
-    <Compile Include="Forms\Form1.cs">
+    <Compile Include="Settings\BlockDropSettings.cs" />
+    <Compile Include="Forms\FormBlockDrop.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Forms\FormBlockDrop.Designer.cs">
+      <DependentUpon>FormBlockDrop.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\FormSelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormSelection.Designer.cs">
+      <DependentUpon>FormSelection.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Interfaces\iFormWithProperties.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Forms\PropertyForm.cs">
@@ -63,9 +70,12 @@
     <Compile Include="Forms\PropertyForm.Designer.cs">
       <DependentUpon>PropertyForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="SettingsBase.cs" />
-    <EmbeddedResource Include="Forms\Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Settings\SettingsBase.cs" />
+    <EmbeddedResource Include="Forms\FormBlockDrop.resx">
+      <DependentUpon>FormBlockDrop.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormSelection.resx">
+      <DependentUpon>FormSelection.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

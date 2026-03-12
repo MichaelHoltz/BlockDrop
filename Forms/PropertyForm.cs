@@ -7,19 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BlockDrop.Settings;
 
 namespace BlockDrop.Forms
 {
     public partial class PropertyForm : Form
     {
-        BlockDropSettings _blockDropSettings;
-        Form1 _form1;
-        public PropertyForm(BlockDropSettings blockDropSettings, Form1 form1)
+        SettingsBase _settingsClassInstance;
+        Form _parentForm;
+        public PropertyForm(SettingsBase settingsClassInstance, Form parentForm)
         {
             InitializeComponent();
-            _blockDropSettings = blockDropSettings;
-            propertyGrid1.SelectedObject = _blockDropSettings;
-            _form1 = form1;
+            _settingsClassInstance = settingsClassInstance;
+            propertyGrid1.SelectedObject = _settingsClassInstance;
+            _parentForm = parentForm;
         }
 
         private void btnQuit_Click(object sender, EventArgs e)
@@ -29,8 +30,8 @@ namespace BlockDrop.Forms
 
         private void PropertyForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _blockDropSettings.Save();
-            _form1.Close();
+            _settingsClassInstance.Save();
+            _parentForm.Close();
         }
     }
 }

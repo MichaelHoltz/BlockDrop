@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlockDrop
+namespace BlockDrop.Settings
 {
     public class BlockDropSettings: SettingsBase
     {

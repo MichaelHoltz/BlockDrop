@@ -1,6 +1,6 @@
 ﻿namespace BlockDrop.Forms
 {
-    partial class Form1
+    partial class FormSelection
     {
         /// <summary>
         /// Required designer variable.
@@ -28,24 +28,33 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.btnFormBlockDrop = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // Form1
+            // btnFormBlockDrop
+            // 
+            this.btnFormBlockDrop.Location = new System.Drawing.Point(34, 49);
+            this.btnFormBlockDrop.Name = "btnFormBlockDrop";
+            this.btnFormBlockDrop.Size = new System.Drawing.Size(141, 40);
+            this.btnFormBlockDrop.TabIndex = 0;
+            this.btnFormBlockDrop.Text = "BlockDrop";
+            this.btnFormBlockDrop.UseVisualStyleBackColor = true;
+            this.btnFormBlockDrop.Click += new System.EventHandler(this.btnFormBlockDrop_Click);
+            // 
+            // FormSelection
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1115, 656);
-            this.DoubleBuffered = true;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "Form1";
-            this.Text = "Form1";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.ClientSize = new System.Drawing.Size(213, 304);
+            this.Controls.Add(this.btnFormBlockDrop);
+            this.Name = "FormSelection";
+            this.Text = "Selection Form";
             this.ResumeLayout(false);
 
         }
 
         #endregion
+
+        private System.Windows.Forms.Button btnFormBlockDrop;
     }
 }
-

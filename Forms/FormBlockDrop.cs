@@ -9,10 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
+using BlockDrop.Settings;
 
 namespace BlockDrop.Forms
 {
-    public partial class Form1 : Form
+    public partial class FormBlockDrop : Form
     {
         /// <summary>
         /// Number of columns in the grid (target ~50 blocks wide)
@@ -78,7 +79,7 @@ namespace BlockDrop.Forms
         /// </summary>
         private readonly Random random = new Random();
 
-        public Form1()
+        public FormBlockDrop()
         {
             InitializeComponent();
 

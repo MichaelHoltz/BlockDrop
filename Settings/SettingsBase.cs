@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 
-namespace BlockDrop
+namespace BlockDrop.Settings
 {
     /// <summary>
     /// SharedBase Class
