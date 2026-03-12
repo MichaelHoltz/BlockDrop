@@ -1,6 +1,6 @@
 {
   "RowTravelTimeMs": 250.0,
-  "MoveDown": false,
+  "MoveDown": true,
   "FadeInRows": 1.0,
   "FadeOutRows": 1.0,
   "UseAllColors": false,

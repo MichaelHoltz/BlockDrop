@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 
-namespace BlockDrop
+namespace BlockDrop.Forms
 {
     public partial class Form1 : Form
     {

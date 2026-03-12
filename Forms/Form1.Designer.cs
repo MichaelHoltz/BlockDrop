@@ -1,4 +1,4 @@
-﻿namespace BlockDrop
+﻿namespace BlockDrop.Forms
 {
     partial class Form1
     {
