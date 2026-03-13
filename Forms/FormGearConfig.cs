@@ -17,14 +17,18 @@ namespace BlockDrop.Forms
         private Gear insideGear;  // Lime green stationary gear
         private Gear outsideGear; // Light blue rotating gear
         private Timer animationTimer;
-        private double rotationSpeed = 0.005; // Radians per tick
+        private double rotationSpeed = 0.15; // Radians per tick
         private bool isPaused = false; // Track animation pause state
         private double orbitParameter = 0; // Tracks the orbit position
+        private List<PointF> tracePath; // Stores the spirograph trace
+        private double traceRadiusPercent = 0.844; // 90% of gear radius
+        private double accumulatedArcLength = 0; // Track total arc length for rotation calculation
 
         public FormGearConfig()
         {
             InitializeComponent();
             this.DoubleBuffered = true;
+            tracePath = new List<PointF>();
             InitializeGears();
             SetupAnimation();
             
@@ -57,25 +61,25 @@ namespace BlockDrop.Forms
                 Position = center,
                 GearColor = Color.LimeGreen,
                 ShapeType = GearShapeType.Circle,
-                TeethCount = 100,
-                ToothPitch = 2.0
             };
             
-            // Create outside gear (light blue, 20% of form radius)
-            double outsideRadius = formRadius * 0.2;
+            // Create outside gear (light blue, oval shape)
+            double outsideRadius = formRadius * 0.5;
             outsideGear = new Gear
             {
                 IsOutsideGear = true,
                 Radius = outsideRadius,
+                RadiusY = outsideRadius * 0.9, // Make it 60% height for oval
                 Position = new PointF(center.X, center.Y - (float)(formRadius - outsideRadius)),
                 GearColor = Color.LightBlue,
-                ShapeType = GearShapeType.Circle,
-                TeethCount = 20,
-                ToothPitch = 2.0
+                ShapeType = GearShapeType.Oval,
+                RotationAngle = 0
             };
             
-            // Reset orbit parameter when initializing
+            // Reset orbit parameter, rotation, arc length, and clear trace when initializing
             orbitParameter = 0;
+            accumulatedArcLength = 0;
+            tracePath.Clear();
         }
 
         private void SetupAnimation()
@@ -86,17 +90,66 @@ namespace BlockDrop.Forms
             animationTimer.Start();
         }
 
+        // Calculate the radius of the gear at a given angle (for ovals/ellipses)
+        private double GetRadiusAtAngle(Gear gear, double angle)
+        {
+            if (gear.ShapeType == GearShapeType.Circle)
+            {
+                return gear.Radius;
+            }
+            else if (gear.ShapeType == GearShapeType.Oval)
+            {
+                // Ellipse formula: r(θ) = (a*b) / sqrt((b*cos(θ))^2 + (a*sin(θ))^2)
+                double a = gear.Radius;
+                double b = gear.EffectiveRadiusY;
+                double cosTheta = Math.Cos(angle);
+                double sinTheta = Math.Sin(angle);
+                return (a * b) / Math.Sqrt((b * cosTheta) * (b * cosTheta) + (a * sinTheta) * (a * sinTheta));
+            }
+            return gear.Radius;
+        }
+
         private void AnimationTimer_Tick(object sender, EventArgs e)
         {
             // Skip animation update if paused
             if (isPaused)
                 return;
             
+            // Store previous orbit parameter
+            double prevOrbitParameter = orbitParameter;
+            
             // Increment the orbit parameter
             orbitParameter += rotationSpeed;
+            double dTheta = orbitParameter - prevOrbitParameter;
             
-            // Distance between centers (smooth gears touch at their radii)
-            double centerDistance = insideGear.Radius - outsideGear.Radius;
+            // For current rotation angle, find contact angle and radius
+            double contactAngle = orbitParameter + Math.PI - outsideGear.RotationAngle;
+            
+            // Normalize angle to [0, 2π]
+            contactAngle = contactAngle % (2 * Math.PI);
+            if (contactAngle < 0) contactAngle += 2 * Math.PI;
+            
+            // Get radius at contact point
+            double rContact = GetRadiusAtAngle(outsideGear, contactAngle);
+            
+            // Distance between centers
+            double centerDistance = insideGear.Radius - rContact;
+            
+            // Arc length traveled by the gear center along its orbit
+            double arcLength = centerDistance * dTheta;
+            accumulatedArcLength += arcLength;
+            
+            // The gear rotates based on accumulated arc length divided by current contact radius
+            // For rolling inside: rotation is negative (opposite direction)
+            outsideGear.RotationAngle = -accumulatedArcLength / GetAverageRadius(outsideGear);
+            
+            // Recalculate contact angle and distance with updated rotation
+            contactAngle = orbitParameter + Math.PI - outsideGear.RotationAngle;
+            contactAngle = contactAngle % (2 * Math.PI);
+            if (contactAngle < 0) contactAngle += 2 * Math.PI;
+            
+            rContact = GetRadiusAtAngle(outsideGear, contactAngle);
+            centerDistance = insideGear.Radius - rContact;
             
             // Calculate new position along inside gear perimeter
             float newX = insideGear.Position.X + (float)(centerDistance * Math.Cos(orbitParameter));
@@ -104,13 +157,37 @@ namespace BlockDrop.Forms
             
             outsideGear.Position = new PointF(newX, newY);
             
-            // Calculate the actual rotation of the gear as it rolls inside
-            // The gear rotates based on the arc length traveled divided by its radius
-            // For rolling inside: rotation = -orbit * ((R - r) / r)
-            outsideGear.RotationAngle = -orbitParameter * ((insideGear.Radius - outsideGear.Radius) / outsideGear.Radius);
+            // Calculate trace point position (at traceRadiusPercent of gear radius along the major axis)
+            double traceRadius = outsideGear.Radius * traceRadiusPercent;
+            float traceX = outsideGear.Position.X + (float)(traceRadius * Math.Cos(outsideGear.RotationAngle));
+            float traceY = outsideGear.Position.Y + (float)(traceRadius * Math.Sin(outsideGear.RotationAngle));
+            
+            // Add to trace path
+            tracePath.Add(new PointF(traceX, traceY));
+            
+            // Limit trace path length to prevent memory issues (keep last 10000 points)
+            if (tracePath.Count > 10000)
+            {
+                tracePath.RemoveAt(0);
+            }
             
             // Force redraw
             this.Invalidate();
+        }
+
+        // Get average radius for the gear (used for rotation calculation)
+        private double GetAverageRadius(Gear gear)
+        {
+            if (gear.ShapeType == GearShapeType.Circle)
+            {
+                return gear.Radius;
+            }
+            else if (gear.ShapeType == GearShapeType.Oval)
+            {
+                // For ellipse, use the geometric mean of the two radii
+                return Math.Sqrt(gear.Radius * gear.EffectiveRadiusY);
+            }
+            return gear.Radius;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -119,6 +196,15 @@ namespace BlockDrop.Forms
             
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            
+            // Draw trace path first (so it appears behind gears)
+            if (tracePath.Count > 1)
+            {
+                using (Pen tracePen = new Pen(Color.Red, 2))
+                {
+                    g.DrawLines(tracePen, tracePath.ToArray());
+                }
+            }
             
             // Draw inside gear (lime green) with 50% opacity
             Color insideColorTransparent = Color.FromArgb(128, insideGear.GearColor);
@@ -137,37 +223,52 @@ namespace BlockDrop.Forms
                     diameter, diameter);
             }
             
-            // Draw outside gear (light blue) with 50% opacity
+            // Draw outside gear (light blue) with 50% opacity - support oval
             Color outsideColorTransparent = Color.FromArgb(128, outsideGear.GearColor);
             Color outsideBorderColor = Color.FromArgb(128, Color.DarkBlue);
             using (Brush outsideBrush = new SolidBrush(outsideColorTransparent))
             using (Pen outsidePen = new Pen(outsideBorderColor, 2))
             {
-                float diameter = (float)outsideGear.Radius * 2;
-                g.FillEllipse(outsideBrush, 
-                    outsideGear.Position.X - (float)outsideGear.Radius, 
-                    outsideGear.Position.Y - (float)outsideGear.Radius, 
-                    diameter, diameter);
-                g.DrawEllipse(outsidePen, 
-                    outsideGear.Position.X - (float)outsideGear.Radius, 
-                    outsideGear.Position.Y - (float)outsideGear.Radius, 
-                    diameter, diameter);
+                float width = (float)outsideGear.Radius * 2;
+                float height = (float)outsideGear.EffectiveRadiusY * 2;
                 
-                // Draw center dot to show rotation
+                // Save graphics state for rotation
+                GraphicsState state = g.Save();
+                
+                // Rotate around the gear center to orient the oval
+                g.TranslateTransform(outsideGear.Position.X, outsideGear.Position.Y);
+                g.RotateTransform((float)(outsideGear.RotationAngle * 180 / Math.PI));
+                
+                // Draw oval centered at origin
+                g.FillEllipse(outsideBrush, -width / 2, -height / 2, width, height);
+                g.DrawEllipse(outsidePen, -width / 2, -height / 2, width, height);
+                
+                // Draw center dot
                 using (Brush centerBrush = new SolidBrush(outsideBorderColor))
                 {
-                    g.FillEllipse(centerBrush, 
-                        outsideGear.Position.X - 3, 
-                        outsideGear.Position.Y - 3, 
-                        6, 6);
+                    g.FillEllipse(centerBrush, -3, -3, 6, 6);
                 }
                 
-                // Draw a line from center to edge to visualize rotation
+                // Draw line to show rotation (pointing to the right in local coordinates)
                 using (Pen rotationPen = new Pen(outsideBorderColor, 2))
                 {
-                    float lineX = outsideGear.Position.X + (float)(outsideGear.Radius * Math.Cos(outsideGear.RotationAngle));
-                    float lineY = outsideGear.Position.Y + (float)(outsideGear.Radius * Math.Sin(outsideGear.RotationAngle));
-                    g.DrawLine(rotationPen, outsideGear.Position, new PointF(lineX, lineY));
+                    g.DrawLine(rotationPen, 0, 0, width / 2, 0);
+                }
+                
+                // Restore graphics state
+                g.Restore(state);
+            }
+            
+            // Draw trace point indicator
+            if (tracePath.Count > 0)
+            {
+                PointF currentTracePoint = tracePath[tracePath.Count - 1];
+                using (Brush tracePointBrush = new SolidBrush(Color.Red))
+                {
+                    g.FillEllipse(tracePointBrush, 
+                        currentTracePoint.X - 4, 
+                        currentTracePoint.Y - 4, 
+                        8, 8);
                 }
             }
             

@@ -12,8 +12,7 @@ namespace BlockDrop.Classes.Gears
         // Basic gear properties
         public bool IsOutsideGear { get; set; } = true;
         public double Radius { get; set; }
-        public int TeethCount { get; set; }
-        public double ToothPitch { get; set; } // Shared pitch for gear meshing
+        public double RadiusY { get; set; } // Secondary radius for oval shapes
         public Color GearColor { get; set; } // Color for rendering the gear
         
         // Shape definition using vertices for custom/spline shapes
@@ -38,6 +37,7 @@ namespace BlockDrop.Classes.Gears
             RotationAngle = 0;
             ShapeType = GearShapeType.Circle;
             GearColor = Color.Gray;
+            RadiusY = 0; // Will default to Radius if not set (circle)
         }
         
         // Add a vertex to define custom shape (for inside gears)
@@ -114,6 +114,12 @@ namespace BlockDrop.Classes.Gears
             float y = ShapeVertices[index].Y + (float)t * (ShapeVertices[nextIndex].Y - ShapeVertices[index].Y);
             
             return new PointF(Position.X + x, Position.Y + y);
+        }
+        
+        // Add helper property to get effective Y radius
+        public double EffectiveRadiusY
+        {
+            get { return RadiusY > 0 ? RadiusY : Radius; }
         }
     }
     
