@@ -20,29 +20,55 @@ namespace BlockDrop.Forms
         private double rotationSpeed = 0.15; // Radians per tick
         private bool isPaused = false; // Track animation pause state
         private double orbitParameter = 0; // Tracks the orbit position
-        private List<PointF> tracePath; // Stores the spirograph trace
-        private double traceRadiusPercent = 0.844; // 90% of gear radius
         private double accumulatedArcLength = 0; // Track total arc length for rotation calculation
 
         public FormGearConfig()
         {
             InitializeComponent();
             this.DoubleBuffered = true;
-            tracePath = new List<PointF>();
             InitializeGears();
             SetupAnimation();
             
-            // Add click event for pause/resume toggle
+            // Add click event for adding traces or pausing
             this.MouseClick += FormGearConfig_MouseClick;
         }
 
         private void FormGearConfig_MouseClick(object sender, MouseEventArgs e)
         {
-            // Toggle pause state
-            isPaused = !isPaused;
+            // Check if click is inside the inside gear
+            float dx = e.X - insideGear.Position.X;
+            float dy = e.Y - insideGear.Position.Y;
+            double distanceFromCenter = Math.Sqrt(dx * dx + dy * dy);
             
-            // Optional: Update form title to show paused state
-            this.Text = isPaused ? "FormGearConfig - Paused" : "FormGearConfig";
+            if (distanceFromCenter <= insideGear.Radius)
+            {
+                // Click is inside the inside gear - add a new trace
+                // Calculate the radius percentage relative to the outside gear
+                // The click radius needs to be scaled to the outside gear's coordinate system
+                double radiusPercent = distanceFromCenter / insideGear.Radius;
+                double traceRadiusOnOutsideGear = outsideGear.Radius * radiusPercent;
+                
+                // Add the trace point with cyan color
+                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Cyan);
+                
+                // Update form title to show trace count
+                this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
+            }
+            else
+            {
+                // Click is outside - toggle pause state
+                isPaused = !isPaused;
+                
+                // Update form title to show paused state
+                if (isPaused)
+                {
+                    this.Text = string.Format("FormGearConfig - {0} trace(s) - Paused", outsideGear.TracePoints.Count);
+                }
+                else
+                {
+                    this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
+                }
+            }
         }
 
         private void InitializeGears()
@@ -61,6 +87,7 @@ namespace BlockDrop.Forms
                 Position = center,
                 GearColor = Color.LimeGreen,
                 ShapeType = GearShapeType.Circle,
+                Opacity = 0.1
             };
             
             // Create outside gear (light blue, oval shape)
@@ -69,17 +96,20 @@ namespace BlockDrop.Forms
             {
                 IsOutsideGear = true,
                 Radius = outsideRadius,
-                RadiusY = outsideRadius * 0.9, // Make it 60% height for oval
+                RadiusY = outsideRadius * 0.9,
                 Position = new PointF(center.X, center.Y - (float)(formRadius - outsideRadius)),
                 GearColor = Color.LightBlue,
                 ShapeType = GearShapeType.Oval,
-                RotationAngle = 0
+                RotationAngle = 0,
+                Opacity = 0.3
             };
             
-            // Reset orbit parameter, rotation, arc length, and clear trace when initializing
+            // Add initial red trace at 80% radius
+            outsideGear.AddTracePoint(outsideRadius * 0.8, 0, Color.Red);
+            
+            // Reset orbit parameter, rotation, arc length when initializing
             orbitParameter = 0;
             accumulatedArcLength = 0;
-            tracePath.Clear();
         }
 
         private void SetupAnimation()
@@ -157,18 +187,25 @@ namespace BlockDrop.Forms
             
             outsideGear.Position = new PointF(newX, newY);
             
-            // Calculate trace point position (at traceRadiusPercent of gear radius along the major axis)
-            double traceRadius = outsideGear.Radius * traceRadiusPercent;
-            float traceX = outsideGear.Position.X + (float)(traceRadius * Math.Cos(outsideGear.RotationAngle));
-            float traceY = outsideGear.Position.Y + (float)(traceRadius * Math.Sin(outsideGear.RotationAngle));
-            
-            // Add to trace path
-            tracePath.Add(new PointF(traceX, traceY));
-            
-            // Limit trace path length to prevent memory issues (keep last 10000 points)
-            if (tracePath.Count > 10000)
+            // Update all trace points
+            foreach (var tracePoint in outsideGear.TracePoints)
             {
-                tracePath.RemoveAt(0);
+                if (tracePoint.IsEnabled)
+                {
+                    // Calculate trace point position
+                    double totalAngle = outsideGear.RotationAngle + tracePoint.Angle;
+                    float traceX = outsideGear.Position.X + (float)(tracePoint.Radius * Math.Cos(totalAngle));
+                    float traceY = outsideGear.Position.Y + (float)(tracePoint.Radius * Math.Sin(totalAngle));
+                    
+                    // Add to trace path
+                    tracePoint.TracePath.Add(new PointF(traceX, traceY));
+                    
+                    // Limit trace path length
+                    if (tracePoint.TracePath.Count > 10000)
+                    {
+                        tracePoint.TracePath.RemoveAt(0);
+                    }
+                }
             }
             
             // Force redraw
@@ -197,20 +234,21 @@ namespace BlockDrop.Forms
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             
-            // Draw trace path first (so it appears behind gears)
-            if (tracePath.Count > 1)
+            // Draw all trace paths first (so they appear behind gears)
+            foreach (var tracePoint in outsideGear.TracePoints)
             {
-                using (Pen tracePen = new Pen(Color.Red, 2))
+                if (tracePoint.IsEnabled && tracePoint.TracePath.Count > 1)
                 {
-                    g.DrawLines(tracePen, tracePath.ToArray());
+                    using (Pen tracePen = new Pen(tracePoint.TraceColor, 2))
+                    {
+                        g.DrawLines(tracePen, tracePoint.TracePath.ToArray());
+                    }
                 }
             }
             
-            // Draw inside gear (lime green) with 50% opacity
-            Color insideColorTransparent = Color.FromArgb(128, insideGear.GearColor);
-            Color insideBorderColor = Color.FromArgb(128, Color.DarkGreen);
-            using (Brush insideBrush = new SolidBrush(insideColorTransparent))
-            using (Pen insidePen = new Pen(insideBorderColor, 2))
+            // Draw inside gear with individual opacity
+            using (Brush insideBrush = new SolidBrush(insideGear.GetColorWithOpacity()))
+            using (Pen insidePen = new Pen(insideGear.GetBorderColorWithOpacity(), 2))
             {
                 float diameter = (float)insideGear.Radius * 2;
                 g.FillEllipse(insideBrush, 
@@ -223,11 +261,9 @@ namespace BlockDrop.Forms
                     diameter, diameter);
             }
             
-            // Draw outside gear (light blue) with 50% opacity - support oval
-            Color outsideColorTransparent = Color.FromArgb(128, outsideGear.GearColor);
-            Color outsideBorderColor = Color.FromArgb(128, Color.DarkBlue);
-            using (Brush outsideBrush = new SolidBrush(outsideColorTransparent))
-            using (Pen outsidePen = new Pen(outsideBorderColor, 2))
+            // Draw outside gear with individual opacity - support oval
+            using (Brush outsideBrush = new SolidBrush(outsideGear.GetColorWithOpacity()))
+            using (Pen outsidePen = new Pen(outsideGear.GetBorderColorWithOpacity(), 2))
             {
                 float width = (float)outsideGear.Radius * 2;
                 float height = (float)outsideGear.EffectiveRadiusY * 2;
@@ -244,31 +280,28 @@ namespace BlockDrop.Forms
                 g.DrawEllipse(outsidePen, -width / 2, -height / 2, width, height);
                 
                 // Draw center dot
-                using (Brush centerBrush = new SolidBrush(outsideBorderColor))
+                using (Brush centerBrush = new SolidBrush(outsideGear.GetBorderColorWithOpacity()))
                 {
                     g.FillEllipse(centerBrush, -3, -3, 6, 6);
-                }
-                
-                // Draw line to show rotation (pointing to the right in local coordinates)
-                using (Pen rotationPen = new Pen(outsideBorderColor, 2))
-                {
-                    g.DrawLine(rotationPen, 0, 0, width / 2, 0);
                 }
                 
                 // Restore graphics state
                 g.Restore(state);
             }
             
-            // Draw trace point indicator
-            if (tracePath.Count > 0)
+            // Draw trace point indicators for all active traces
+            foreach (var tracePoint in outsideGear.TracePoints)
             {
-                PointF currentTracePoint = tracePath[tracePath.Count - 1];
-                using (Brush tracePointBrush = new SolidBrush(Color.Red))
+                if (tracePoint.IsEnabled && tracePoint.TracePath.Count > 0)
                 {
-                    g.FillEllipse(tracePointBrush, 
-                        currentTracePoint.X - 4, 
-                        currentTracePoint.Y - 4, 
-                        8, 8);
+                    PointF currentTracePoint = tracePoint.TracePath[tracePoint.TracePath.Count - 1];
+                    using (Brush tracePointBrush = new SolidBrush(tracePoint.TraceColor))
+                    {
+                        g.FillEllipse(tracePointBrush, 
+                            currentTracePoint.X - 4, 
+                            currentTracePoint.Y - 4, 
+                            8, 8);
+                    }
                 }
             }
             

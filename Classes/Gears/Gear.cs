@@ -14,6 +14,7 @@ namespace BlockDrop.Classes.Gears
         public double Radius { get; set; }
         public double RadiusY { get; set; } // Secondary radius for oval shapes
         public Color GearColor { get; set; } // Color for rendering the gear
+        public double Opacity { get; set; } = 0.2; // Opacity from 0.0 to 1.0 (default 50%)
         
         // Shape definition using vertices for custom/spline shapes
         // Used primarily for inside gears with custom curves
@@ -38,6 +39,34 @@ namespace BlockDrop.Classes.Gears
             ShapeType = GearShapeType.Circle;
             GearColor = Color.Gray;
             RadiusY = 0; // Will default to Radius if not set (circle)
+        }
+        
+        // Add helper property to get effective Y radius
+        public double EffectiveRadiusY
+        {
+            get { return RadiusY > 0 ? RadiusY : Radius; }
+        }
+        
+        // Helper method to get the gear color with applied opacity
+        public Color GetColorWithOpacity()
+        {
+            int alpha = (int)(Opacity * 255);
+            alpha = Math.Max(0, Math.Min(255, alpha)); // Clamp to 0-255
+            return Color.FromArgb(alpha, GearColor);
+        }
+        
+        // Helper method to get a darker border color with applied opacity
+        public Color GetBorderColorWithOpacity()
+        {
+            int alpha = (int)(Opacity * 255);
+            alpha = Math.Max(0, Math.Min(255, alpha)); // Clamp to 0-255
+            
+            // Make border darker
+            int r = Math.Max(0, GearColor.R - 40);
+            int g = Math.Max(0, GearColor.G - 40);
+            int b = Math.Max(0, GearColor.B - 40);
+            
+            return Color.FromArgb(alpha, r, g, b);
         }
         
         // Add a vertex to define custom shape (for inside gears)
@@ -114,12 +143,6 @@ namespace BlockDrop.Classes.Gears
             float y = ShapeVertices[index].Y + (float)t * (ShapeVertices[nextIndex].Y - ShapeVertices[index].Y);
             
             return new PointF(Position.X + x, Position.Y + y);
-        }
-        
-        // Add helper property to get effective Y radius
-        public double EffectiveRadiusY
-        {
-            get { return RadiusY > 0 ? RadiusY : Radius; }
         }
     }
     
