@@ -84,14 +84,15 @@ namespace BlockDrop.Classes.Gears
             }
         }
         
-        // Add a trace point at specified radius, angle, and color
-        public void AddTracePoint(double radius, double angle, Color color)
+        // Add a trace point at specified radius, angle, color, and optional opacity
+        public void AddTracePoint(double radius, double angle, Color color, double opacity = 1.0)
         {
             TracePoints.Add(new TracePoint 
             { 
                 Radius = radius, 
                 Angle = angle, 
-                TraceColor = color 
+                TraceColor = color,
+                Opacity = opacity
             });
         }
         
@@ -153,6 +154,7 @@ namespace BlockDrop.Classes.Gears
         public Color TraceColor { get; set; }
         public List<PointF> TracePath { get; set; } // Accumulated path points
         public bool IsEnabled { get; set; }
+        public double Opacity { get; set; } = 1.0; // Opacity from 0.0 to 1.0 (default 100%)
         
         public TracePoint()
         {
@@ -168,6 +170,14 @@ namespace BlockDrop.Classes.Gears
             double x = gear.Position.X + Radius * Math.Cos(totalAngle);
             double y = gear.Position.Y + Radius * Math.Sin(totalAngle);
             return new PointF((float)x, (float)y);
+        }
+        
+        // Helper method to get the trace color with applied opacity
+        public Color GetColorWithOpacity()
+        {
+            int alpha = (int)(Opacity * 255);
+            alpha = Math.Max(0, Math.Min(255, alpha)); // Clamp to 0-255
+            return Color.FromArgb(alpha, TraceColor);
         }
     }
     

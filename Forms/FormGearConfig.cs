@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using BlockDrop.Classes.Gears;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BlockDrop.Classes.Gears;
 
 namespace BlockDrop.Forms
 {
@@ -49,7 +43,7 @@ namespace BlockDrop.Forms
                 double traceRadiusOnOutsideGear = outsideGear.Radius * radiusPercent;
                 
                 // Add the trace point with cyan color
-                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Cyan);
+                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Green, 0.5);
                 
                 // Update form title to show trace count
                 this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
@@ -105,7 +99,7 @@ namespace BlockDrop.Forms
             };
             
             // Add initial red trace at 80% radius
-            outsideGear.AddTracePoint(outsideRadius * 0.8, 0, Color.Red);
+            outsideGear.AddTracePoint(outsideRadius * 0.6, 0, Color.Purple, 0.8);
             
             // Reset orbit parameter, rotation, arc length when initializing
             orbitParameter = 0;
@@ -239,7 +233,7 @@ namespace BlockDrop.Forms
             {
                 if (tracePoint.IsEnabled && tracePoint.TracePath.Count > 1)
                 {
-                    using (Pen tracePen = new Pen(tracePoint.TraceColor, 2))
+                    using (Pen tracePen = new Pen(tracePoint.GetColorWithOpacity(), 2))
                     {
                         g.DrawLines(tracePen, tracePoint.TracePath.ToArray());
                     }
@@ -289,13 +283,13 @@ namespace BlockDrop.Forms
                 g.Restore(state);
             }
             
-            // Draw trace point indicators for all active traces
+            // Draw trace point indicators for all active traces with opacity
             foreach (var tracePoint in outsideGear.TracePoints)
             {
                 if (tracePoint.IsEnabled && tracePoint.TracePath.Count > 0)
                 {
                     PointF currentTracePoint = tracePoint.TracePath[tracePoint.TracePath.Count - 1];
-                    using (Brush tracePointBrush = new SolidBrush(tracePoint.TraceColor))
+                    using (Brush tracePointBrush = new SolidBrush(tracePoint.GetColorWithOpacity()))
                     {
                         g.FillEllipse(tracePointBrush, 
                             currentTracePoint.X - 4, 
