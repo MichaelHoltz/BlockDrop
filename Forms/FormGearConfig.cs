@@ -43,7 +43,7 @@ namespace BlockDrop.Forms
                 double traceRadiusOnOutsideGear = outsideGear.Radius * radiusPercent;
                 
                 // Add the trace point with cyan color
-                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Green, 0.5);
+                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Green, 0.8);
                 
                 // Update form title to show trace count
                 this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
@@ -79,13 +79,13 @@ namespace BlockDrop.Forms
                 IsOutsideGear = false,
                 Radius = formRadius,
                 Position = center,
-                GearColor = Color.LimeGreen,
+                GearColor = Color.White,
                 ShapeType = GearShapeType.Circle,
-                Opacity = 0.1
+                Opacity = 0.2
             };
             
             // Create outside gear (light blue, oval shape)
-            double outsideRadius = formRadius * 0.5;
+            double outsideRadius = formRadius * 0.7;
             outsideGear = new Gear
             {
                 IsOutsideGear = true,
@@ -95,7 +95,7 @@ namespace BlockDrop.Forms
                 GearColor = Color.LightBlue,
                 ShapeType = GearShapeType.Oval,
                 RotationAngle = 0,
-                Opacity = 0.3
+                Opacity = 0.1
             };
             
             // Add initial red trace at 80% radius
