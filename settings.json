@@ -4,6 +4,6 @@
   "FadeInRows": 1.0,
   "FadeOutRows": 1.0,
   "UseAllColors": false,
-  "BaseColor": "255, 128, 0",
+  "BaseColor": "192, 255, 192",
   "UILanguage": "en-US"
 }

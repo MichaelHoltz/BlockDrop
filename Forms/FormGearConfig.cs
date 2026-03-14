@@ -29,6 +29,67 @@ namespace BlockDrop.Forms
 
         private void FormGearConfig_MouseClick(object sender, MouseEventArgs e)
         {
+            // Check if click is on the outside gear first (it's smaller and on top)
+            float dxOutside = e.X - outsideGear.Position.X;
+            float dyOutside = e.Y - outsideGear.Position.Y;
+            double distanceFromOutsideCenter = Math.Sqrt(dxOutside * dxOutside + dyOutside * dyOutside);
+            
+            // For oval, we need to check if the point is inside the ellipse
+            bool clickedOnOutsideGear = false;
+            double clickAngleInGearSpace = 0;
+            
+            if (outsideGear.ShapeType == GearShapeType.Oval)
+            {
+                // Transform click point to gear's local coordinate system (accounting for rotation)
+                double cosRot = Math.Cos(-outsideGear.RotationAngle);
+                double sinRot = Math.Sin(-outsideGear.RotationAngle);
+                double localX = dxOutside * cosRot - dyOutside * sinRot;
+                double localY = dxOutside * sinRot + dyOutside * cosRot;
+                
+                // Check if point is inside the ellipse: (x/a)^2 + (y/b)^2 <= 1
+                double normalizedX = localX / outsideGear.Radius;
+                double normalizedY = localY / outsideGear.EffectiveRadiusY;
+                clickedOnOutsideGear = (normalizedX * normalizedX + normalizedY * normalizedY) <= 1.0;
+                
+                if (clickedOnOutsideGear)
+                {
+                    // Calculate angle in gear's local space
+                    clickAngleInGearSpace = Math.Atan2(localY, localX);
+                }
+            }
+            else // Circle
+            {
+                clickedOnOutsideGear = distanceFromOutsideCenter <= outsideGear.Radius;
+                if (clickedOnOutsideGear)
+                {
+                    clickAngleInGearSpace = Math.Atan2(dyOutside, dxOutside);
+                }
+            }
+            
+            if (clickedOnOutsideGear)
+            {
+                // Click is on the outside gear - add a new trace at the clicked position
+                // Calculate the radius from the gear center
+                double clickRadius = Math.Sqrt(dxOutside * dxOutside + dyOutside * dyOutside);
+                
+                // Calculate angle relative to gear's current rotation (for out-of-phase traces)
+                double angleRelativeToGear = Math.Atan2(dyOutside, dxOutside) - outsideGear.RotationAngle;
+                
+                // Normalize angle to [0, 2π]
+                while (angleRelativeToGear < 0) angleRelativeToGear += 2 * Math.PI;
+                while (angleRelativeToGear >= 2 * Math.PI) angleRelativeToGear -= 2 * Math.PI;
+                
+                // Add the trace point with green color at the clicked radius and angle
+                outsideGear.AddTracePoint(clickRadius, angleRelativeToGear, Color.Green, 0.8);
+                
+                // Update form title to show trace count
+                this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
+                
+                // Force immediate redraw to show the new trace point
+                this.Invalidate();
+                return;
+            }
+            
             // Check if click is inside the inside gear
             float dx = e.X - insideGear.Position.X;
             float dy = e.Y - insideGear.Position.Y;
@@ -38,30 +99,31 @@ namespace BlockDrop.Forms
             {
                 // Click is inside the inside gear - add a new trace
                 // Calculate the radius percentage relative to the outside gear
-                // The click radius needs to be scaled to the outside gear's coordinate system
                 double radiusPercent = distanceFromCenter / insideGear.Radius;
                 double traceRadiusOnOutsideGear = outsideGear.Radius * radiusPercent;
                 
-                // Add the trace point with cyan color
-                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Green, 0.8);
+                // Add the trace point with cyan color (angle = 0, in phase with gear rotation line)
+                outsideGear.AddTracePoint(traceRadiusOnOutsideGear, 0, Color.Cyan, 0.8);
                 
                 // Update form title to show trace count
                 this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
+                
+                // Force immediate redraw to show the new trace point
+                this.Invalidate();
+                return;
+            }
+            
+            // Click is outside both gears - toggle pause state
+            isPaused = !isPaused;
+            
+            // Update form title to show paused state
+            if (isPaused)
+            {
+                this.Text = string.Format("FormGearConfig - {0} trace(s) - Paused", outsideGear.TracePoints.Count);
             }
             else
             {
-                // Click is outside - toggle pause state
-                isPaused = !isPaused;
-                
-                // Update form title to show paused state
-                if (isPaused)
-                {
-                    this.Text = string.Format("FormGearConfig - {0} trace(s) - Paused", outsideGear.TracePoints.Count);
-                }
-                else
-                {
-                    this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
-                }
+                this.Text = string.Format("FormGearConfig - {0} trace(s)", outsideGear.TracePoints.Count);
             }
         }
 
